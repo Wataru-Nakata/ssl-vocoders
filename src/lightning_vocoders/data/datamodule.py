@@ -30,7 +30,7 @@ class VocoderDataModule(lightning.LightningDataModule):
             self.train_dataset,
             batch_size=self.cfg.data.train_batch_size,
             collate_fn=self.collate_fn,
-            num_workers=20,
+            num_workers=0,
         )
 
     def val_dataloader(self):
@@ -38,7 +38,7 @@ class VocoderDataModule(lightning.LightningDataModule):
             self.val_dataset,
             batch_size=self.cfg.data.val_batch_size,
             collate_fn=self.collate_fn,
-            num_workers=20,
+            num_workers=0,
         )
 
     def collate_fn(self, batch):
@@ -53,4 +53,11 @@ class VocoderDataModule(lightning.LightningDataModule):
         outputs["ssl_feature"] = pad_sequence(
             [b[self.cfg.data.target_feature].T for b in batch], batch_first=True
         )
+        outputs["speech.wav"] = pad_sequence(
+            [b["speech.wav"][0].T for b in batch], batch_first=True
+        )
+        outputs["resampled_speech.pth"] = pad_sequence(
+            [b["resampled_speech.pth"].T for b in batch], batch_first=True
+        )
+        outputs["filenames"] = [b["__key__"] for b in batch]
         return outputs

@@ -6,3 +6,5 @@ val_dataset_path: preprocessed_data/glob/glob-val-000000.tar.gz
 
 train_batch_size: 32
 val_batch_size: 8
+
+target_feature: mel.pth

@@ -24,7 +24,7 @@ class Preprocessor:
         self.mel_scale = torchaudio.transforms.MelScale(**cfg.preprocess.mel)
         self.sampling_rate = self.cfg.sample_rate
         self.ssl_models = hydra.utils.instantiate(cfg.preprocess.ssl_models)
-
+    @torch.no_grad()
     def process_utterance(
         self,
         basename: str,
@@ -58,7 +58,7 @@ class Preprocessor:
             inputs.to("cuda")
             ssl_model.to("cuda")
             output = ssl_model(**inputs, output_hidden_states=True)
-            sample[sample_key] = webdataset.torch_dumps(output.last_hidden_state)
+            sample[sample_key] = webdataset.torch_dumps(output.last_hidden_state.cpu())
 
         return sample
 

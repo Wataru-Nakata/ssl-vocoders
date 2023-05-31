@@ -52,7 +52,7 @@ class HiFiGANLightningModule(LightningModule):
         ]
 
     def training_step(self, batch, batch_idx) -> STEP_OUTPUT:
-        generator_input, wav, mel, _ = batch
+        generator_input, wav, mel, _ = batch['ssl_feature'], batch['resampled_speech.pth'], batch['mels'],batch['filenames']
         wav_generator_out = self.generator(generator_input)
 
         opt_g, opt_d = self.optimizers()
@@ -119,18 +119,18 @@ class HiFiGANLightningModule(LightningModule):
         sch_g.step()
 
     def validation_step(self, batch, batch_idx) -> STEP_OUTPUT | None:
-        generator_input, wav, mel, _ = batch
+        generator_input, wav, mel, _ = batch['ssl_feature'], batch['resampled_speech.pth'], batch['mels'],batch['filenames']
         wav_generator_out = self.generator(generator_input)
         predicted_mel, _ = self.calc_spectrogram(wav_generator_out)
         loss_recons = self.reconstruction_loss(mel, predicted_mel)
         self.log("val/reconstruction", loss_recons)
 
     def reconstruction_loss(self, mel_gt, mel_predicted):
-        return torch.nn.L1Loss()(mel_gt, mel_predicted)
+        return torch.nn.L1Loss()(mel_gt, mel_predicted.squeeze(1).transpose(1,2)[:,:mel_gt.size(1),:])
 
     def calc_spectrogram(self, waveform: torch.Tensor):
         magspec = self.spec_module(waveform)
         melspec = self.mel_scale(magspec)
         logmelspec = torch.log(torch.clamp_min(melspec, 1.0e-5) * 1.0).to(torch.float32)
         energy = torch.norm(magspec, dim=0)
-        return logmelspec, energy.numpy()
+        return logmelspec, energy

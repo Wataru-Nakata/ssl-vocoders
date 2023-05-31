@@ -1,6 +1,7 @@
 trainer:
   _target_: lightning.Trainer
-  accelerator: "auto"
+  accelerator: "gpu"
+  devices: [0]
 loggers:
   - _target_: lightning.pytorch.loggers.TensorBoardLogger
     save_dir: "tb_logs"
