@@ -1,0 +1,8 @@
+trainer:
+  _target_: lightning.Trainer
+  accelerator: "auto"
+loggers:
+  - _target_: lightning.pytorch.loggers.TensorBoardLogger
+    save_dir: "tb_logs"
+  # - _target_: lightning.pytorch.loggers.WandbLogger
+  #   project: "hifigan-lightning"

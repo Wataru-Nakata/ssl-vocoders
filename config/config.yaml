@@ -1,0 +1,8 @@
+defaults:
+  - _self_
+  - preprocess: default
+  - model: default
+  - train: default
+  - data: default
+sample_rate: 22050
+compile: False

@@ -1,0 +1,3 @@
+_target_: lightning_vocoders.preprocessor.dataset.glob_wav_dataset.GlobWavDataset
+root: /mnt/hdd/datasets/LJSpeech-1.1
+pattern: "**/*.wav"
