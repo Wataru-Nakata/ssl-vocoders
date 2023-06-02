@@ -1,7 +1,7 @@
 datamodule:
   _target_: lightning_vocoders.data.datamodule.VocoderDataModule
-train_dataset_path: preprocessed_data/glob/glob-train-{000000..000047}.tar.gz
-val_dataset_path: preprocessed_data/glob/glob-val-{000000..000014}.tar.gz
+train_dataset_path: preprocessed_data/glob/glob-train-{000000..000006}.tar.gz
+val_dataset_path: preprocessed_data/glob/glob-val-{000000..000002}.tar.gz
 
 
 train_batch_size: 32

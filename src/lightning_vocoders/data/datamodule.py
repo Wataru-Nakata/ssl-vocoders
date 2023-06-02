@@ -8,12 +8,15 @@ import torch
 import json
 import math
 import random
+import torchaudio
 
 
 class VocoderDataModule(lightning.LightningDataModule):
     def __init__(self, cfg: DictConfig) -> None:
         super().__init__()
         self.cfg = cfg
+        self.spec_module = torchaudio.transforms.Spectrogram(**cfg.preprocess.stft)
+        self.mel_scale = torchaudio.transforms.MelScale(**cfg.preprocess.mel)
 
     def setup(self, stage: str):
         self.train_dataset = (
@@ -42,6 +45,7 @@ class VocoderDataModule(lightning.LightningDataModule):
             collate_fn=self.collate_fn,
             num_workers=8,
         )
+
     @torch.no_grad()
     def collate_fn(self, batch, segment_size: int = -1):
         outputs = dict()
@@ -49,16 +53,12 @@ class VocoderDataModule(lightning.LightningDataModule):
             input_feature_hop_size = (
                 self.cfg.sample_rate / self.cfg.data.target_feature.samples_per_sec
             )
-            mel_hop_size = self.cfg.preprocess.stft.hop_length
             target_feature = self.cfg.data.target_feature.key
-            target_layer = self.cfg.data.target_feature.layer
             input_feature_frames_per_seg = math.ceil(
                 segment_size / input_feature_hop_size
             )
-            mel_frames_per_seg = math.ceil(segment_size / mel_hop_size)
             cropped_speeches = []
             cropped_features = []
-            cropped_mels = []
             for sample in batch:
                 audio_len = sample["resampled_speech.pth"].size(0)
                 data_len = sample[target_feature].size(1)
@@ -66,14 +66,11 @@ class VocoderDataModule(lightning.LightningDataModule):
                     input_feature_start = random.randint(
                         0, data_len - input_feature_frames_per_seg - 1
                     )
-                    mel_start = int(
-                        input_feature_start * input_feature_hop_size / mel_hop_size
-                    )
                     cropped_features.append(
-                        sample[target_feature][target_layer][
+                        sample[target_feature][
                             input_feature_start : input_feature_start
-                            + input_feature_frames_per_seg,:
-                            
+                            + input_feature_frames_per_seg,
+                            :,
                         ]
                     )
                     cropped_speeches.append(
@@ -84,24 +81,17 @@ class VocoderDataModule(lightning.LightningDataModule):
                             )
                         ]
                     )
-                    cropped_mels.append(
-                        sample["mel.pth"][0][
-                            mel_start : mel_start + mel_frames_per_seg,:
-                        ]
-                    )
                 else:
-                    cropped_features.append(sample[target_feature][target_layer])
+                    cropped_features.append(sample[target_feature])
                     cropped_speeches.append(sample["resampled_speech.pth"])
-                    cropped_mels.append(sample["mel.pth"][0])
             outputs["resampled_speech.pth"] = pad_sequence(
                 cropped_speeches, batch_first=True
             )
             outputs["ssl_feature"] = pad_sequence(cropped_features, batch_first=True)
-            outputs["mels"] = pad_sequence(
-                cropped_mels, batch_first=True, padding_value=1e-9
-            )
+            outputs["mels"] = self.calc_spectrogram(outputs["resampled_speech.pth"])[0].transpose(1,2)
+
             outputs["mel_lens"] = torch.tensor(
-                [cropped_mel.size(1) for cropped_mel in cropped_mels]
+                [cropped_speech.size(0)//self.cfg.preprocess.stft.hop_length for cropped_speech in cropped_speeches]
             )
             outputs["max_mel_len"] = outputs["mel_lens"].max()
         else:
@@ -109,16 +99,11 @@ class VocoderDataModule(lightning.LightningDataModule):
                 [b["resampled_speech.pth"] for b in batch], batch_first=True
             )
             outputs["ssl_feature"] = pad_sequence(
-                [
-                    b[self.cfg.data.target_feature.key][
-                        self.cfg.data.target_feature.layer
-                    ]
-                    for b in batch
-                ],
+                [b[self.cfg.data.target_feature.key] for b in batch],
                 batch_first=True,
             )
             outputs["mels"] = pad_sequence(
-                [b["mel.pth"][0] for b in batch], batch_first=True, padding_value=1e-9
+                [b["mel.pth"] for b in batch], batch_first=True, padding_value=1e-9
             )
             outputs["mel_lens"] = torch.tensor([b["mel.pth"].size(0) for b in batch])
             outputs["max_mel_len"] = outputs["mel_lens"].max()
@@ -131,3 +116,10 @@ class VocoderDataModule(lightning.LightningDataModule):
         )
         outputs["filenames"] = [b["__key__"] for b in batch]
         return outputs
+
+    def calc_spectrogram(self, waveform: torch.Tensor):
+        magspec = self.spec_module(waveform)
+        melspec = self.mel_scale(magspec)
+        logmelspec = torch.log(torch.clamp_min(melspec, 1.0e-5) * 1.0).to(torch.float32)
+        energy = torch.norm(magspec, dim=0)
+        return logmelspec, energy

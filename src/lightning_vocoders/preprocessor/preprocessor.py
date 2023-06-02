@@ -47,20 +47,20 @@ class Preprocessor:
             "__key__": basename,
             "speech.wav": wav_bytes,
             "resampled_speech.pth": webdataset.torch_dumps(waveform),
-            "mel.pth": webdataset.torch_dumps(mel_spec.T.unsqueeze(0)),
+            "mel.pth": webdataset.torch_dumps(mel_spec.T),
         }
-        for ssl_model, processor, sample_rate_ssl, sample_key in self.ssl_models:
+        for ssl_model, processor, feature_cfg in self.ssl_models:
             wav_tensor = torchaudio.functional.resample(
-                waveform=orig_waveform, orig_freq=sample_rate, new_freq=16_000
+                waveform=orig_waveform, orig_freq=sample_rate, new_freq=feature_cfg.sr
             )
             inputs = processor(
-                wav_tensor.squeeze(), return_tensors="pt", sampling_rate=sample_rate_ssl
+                wav_tensor.squeeze(), return_tensors="pt", sampling_rate=feature_cfg.sr
             )
             inputs.to("cuda")
             ssl_model.to("cuda")
             output = ssl_model(**inputs, output_hidden_states=True)
-            sample[sample_key] = webdataset.torch_dumps(
-                torch.cat(output.hidden_states).cpu()
+            sample[feature_cfg.key] = webdataset.torch_dumps(
+                output.hidden_states[feature_cfg.layer][0].cpu()
             )
 
         return sample

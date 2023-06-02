@@ -34,5 +34,6 @@ ssl_models:
       pretrained_model_name_or_path: "microsoft/wavlm-base"
     - _target_: transformers.AutoFeatureExtractor.from_pretrained
       pretrained_model_name_or_path: "microsoft/wavlm-base"
-    - 16_000
-    - wavlm-base.pth
+    - sr: 16_000
+      key: wavlm-base.pth
+      layer: 12
