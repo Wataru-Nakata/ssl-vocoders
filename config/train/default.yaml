@@ -2,7 +2,9 @@ trainer:
   _target_: lightning.Trainer
   accelerator: "gpu"
   devices: [0]
-  precision: '16-mixed'
+  precision: 32
+  check_val_every_n_epoch: 10
+
 loggers:
   - _target_: lightning.pytorch.loggers.TensorBoardLogger
     save_dir: "tb_logs"

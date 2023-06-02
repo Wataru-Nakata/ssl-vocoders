@@ -4,6 +4,7 @@ import hydra
 import torch
 from omegaconf import DictConfig
 from lightning_vocoders.models.hifigan.lightning_module import HiFiGANLightningModule
+from lightning.pytorch.callbacks import LearningRateMonitor
 
 pyrootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
 
@@ -12,10 +13,13 @@ pyrootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
 def main(cfg: DictConfig):
     lightning_module = hydra.utils.instantiate(cfg.model.lightning_module, cfg)
     if cfg.compile:
-        lightning_module = torch.compile(lightning_module)
+        lightning_module = torch.compile(lightning_module, dynamic=True)
+    callbacks = [LearningRateMonitor(logging_interval="step")]
     datamodule = hydra.utils.instantiate(cfg.data.datamodule, cfg)
     loggers = [hydra.utils.instantiate(logger) for logger in cfg.train.loggers]
-    trainer = hydra.utils.instantiate(cfg.train.trainer, logger=loggers)
+    trainer = hydra.utils.instantiate(
+        cfg.train.trainer, logger=loggers, callbacks=callbacks
+    )
     trainer.fit(lightning_module, datamodule)
 
 

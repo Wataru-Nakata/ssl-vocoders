@@ -98,16 +98,22 @@ class HiFiGANLightningModule(LightningModule):
         loss_recons = self.reconstruction_loss(mel, predicted_mel)
         loss_g = loss_recons * self.cfg.model.loss.recons_coef
         if self.global_step >= self.cfg.model.adversarial_start_step:
-            mpd_out_real, mpd_out_fake, _, _ = self.multi_period_discriminator(
-                wav, wav_generator_out
-            )
-            loss_fm_mpd = feature_loss(mpd_out_real, mpd_out_fake)
+            (
+                mpd_out_real,
+                mpd_out_fake,
+                fmap_f_real,
+                fmap_f_generated,
+            ) = self.multi_period_discriminator(wav, wav_generator_out)
+            loss_fm_mpd = feature_loss(fmap_f_real, fmap_f_generated)
 
             # msd
-            msd_out_real, msd_out_fake, _, _ = self.multi_scale_discriminator(
-                wav, wav_generator_out
-            )
-            loss_fm_msd = feature_loss(msd_out_real, msd_out_fake)
+            (
+                msd_out_real,
+                msd_out_fake,
+                fmap_scale_real,
+                fmap_scale_generated,
+            ) = self.multi_scale_discriminator(wav, wav_generator_out)
+            loss_fm_msd = feature_loss(fmap_scale_real, fmap_scale_generated)
 
             loss_g_mpd, losses_gen_f = generator_loss(mpd_out_fake)
             loss_g_msd, losses_gen_s = generator_loss(msd_out_fake)
@@ -126,11 +132,12 @@ class HiFiGANLightningModule(LightningModule):
         sch_g.step()
 
     def validation_step(self, batch, batch_idx) -> STEP_OUTPUT | None:
-        generator_input, wav, mel, filename = (
+        generator_input, wav, mel, filename, wav_lens = (
             batch["ssl_feature"],
             batch["resampled_speech.pth"],
             batch["mels"],
             batch["filenames"],
+            batch["wav_lens"],
         )
         wav_generator_out = self.generator(generator_input)
         predicted_mel, _ = self.calc_spectrogram(wav_generator_out)
@@ -141,12 +148,16 @@ class HiFiGANLightningModule(LightningModule):
             and self.local_rank == 0
         ):
             self.log_audio(
-                wav_generator_out[0].squeeze().cpu().numpy().astype(np.float32),
+                wav_generator_out[0]
+                .squeeze()[: wav_lens[0]]
+                .cpu()
+                .numpy()
+                .astype(np.float32),
                 name=f"generated/{filename[0]}",
                 sampling_rate=self.cfg.sample_rate,
             )
             self.log_audio(
-                wav[0].squeeze().cpu().numpy().astype(np.float32),
+                wav[0].squeeze()[: wav_lens[0]].cpu().numpy().astype(np.float32),
                 name=f"natural/{filename[0]}",
                 sampling_rate=self.cfg.sample_rate,
             )

@@ -24,7 +24,7 @@ optim:
   scheduler_d:
     _target_: torch.optim.lr_scheduler.ExponentialLR
     gamma: 0.999
-adversarial_start_step: 10
+adversarial_start_step: 10_000
 
 loss:
   recons_coef: 45
