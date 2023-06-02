@@ -24,6 +24,7 @@ class Preprocessor:
         self.mel_scale = torchaudio.transforms.MelScale(**cfg.preprocess.mel)
         self.sampling_rate = self.cfg.sample_rate
         self.ssl_models = hydra.utils.instantiate(cfg.preprocess.ssl_models)
+
     @torch.no_grad()
     def process_utterance(
         self,

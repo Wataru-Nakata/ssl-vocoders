@@ -189,7 +189,7 @@ class Generator(torch.nn.Module):
         self.conv_post.apply(init_weights)
 
     def forward(self, x):
-        x = self.conv_pre(x.transpose(1,2))
+        x = self.conv_pre(x.transpose(1, 2))
         for i in range(self.num_upsamples):
             x = F.leaky_relu(x, LRELU_SLOPE)
             x = self.ups[i](x)

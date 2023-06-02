@@ -2,8 +2,9 @@ trainer:
   _target_: lightning.Trainer
   accelerator: "gpu"
   devices: [0]
+  precision: '16-mixed'
 loggers:
   - _target_: lightning.pytorch.loggers.TensorBoardLogger
     save_dir: "tb_logs"
-  # - _target_: lightning.pytorch.loggers.WandbLogger
-  #   project: "hifigan-lightning"
+  - _target_: lightning.pytorch.loggers.WandbLogger
+    project: "hifigan-lightning"

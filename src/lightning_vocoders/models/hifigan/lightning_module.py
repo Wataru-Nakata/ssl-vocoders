@@ -1,8 +1,9 @@
 import itertools
 from typing import Any, Optional
-from lightning.pytorch import LightningModule
+from lightning.pytorch import LightningModule, loggers
 from lightning.pytorch.utilities.types import STEP_OUTPUT
 from omegaconf import DictConfig
+import numpy as np
 from .hifigan import (
     Generator,
     MultiPeriodDiscriminator,
@@ -52,12 +53,18 @@ class HiFiGANLightningModule(LightningModule):
         ]
 
     def training_step(self, batch, batch_idx) -> STEP_OUTPUT:
-        generator_input, wav, mel, _ = batch['ssl_feature'], batch['resampled_speech.pth'], batch['mels'],batch['filenames']
+        generator_input, wav, mel, _ = (
+            batch["ssl_feature"],
+            batch["resampled_speech.pth"],
+            batch["mels"],
+            batch["filenames"],
+        )
+        wav = wav.unsqueeze(1)
         wav_generator_out = self.generator(generator_input)
 
         opt_g, opt_d = self.optimizers()
         sch_g, sch_d = self.lr_schedulers()
-        if self.global_step >= self.cfg.adversarial_start_step:
+        if self.global_step >= self.cfg.model.adversarial_start_step:
             opt_d.zero_grad()
 
             # mpd
@@ -89,8 +96,8 @@ class HiFiGANLightningModule(LightningModule):
         opt_g.zero_grad()
         predicted_mel, _ = self.calc_spectrogram(wav_generator_out)
         loss_recons = self.reconstruction_loss(mel, predicted_mel)
-        loss_g = loss_recons * self.cfg.loss.recons_coef
-        if self.global_step >= self.cfg.adversarial_start_step:
+        loss_g = loss_recons * self.cfg.model.loss.recons_coef
+        if self.global_step >= self.cfg.model.adversarial_start_step:
             mpd_out_real, mpd_out_fake, _, _ = self.multi_period_discriminator(
                 wav, wav_generator_out
             )
@@ -104,10 +111,10 @@ class HiFiGANLightningModule(LightningModule):
 
             loss_g_mpd, losses_gen_f = generator_loss(mpd_out_fake)
             loss_g_msd, losses_gen_s = generator_loss(msd_out_fake)
-            loss_g += loss_fm_mpd * self.cfg.loss.fm_mpd_coef
-            loss_g += loss_fm_msd * self.cfg.loss.fm_msd_coef
-            loss_g += loss_g_mpd * self.cfg.loss.g_mpd_coef
-            loss_g += loss_g_msd * self.cfg.loss.g_msd_coef
+            loss_g += loss_fm_mpd * self.cfg.model.loss.fm_mpd_coef
+            loss_g += loss_fm_msd * self.cfg.model.loss.fm_msd_coef
+            loss_g += loss_g_mpd * self.cfg.model.loss.g_mpd_coef
+            loss_g += loss_g_msd * self.cfg.model.loss.g_msd_coef
             self.log("train/generator/loss_fm_mpd", loss_fm_mpd)
             self.log("train/generator/loss_fm_msd", loss_fm_msd)
             self.log("train/generator/loss_g_mpd", loss_g_mpd)
@@ -119,14 +126,37 @@ class HiFiGANLightningModule(LightningModule):
         sch_g.step()
 
     def validation_step(self, batch, batch_idx) -> STEP_OUTPUT | None:
-        generator_input, wav, mel, _ = batch['ssl_feature'], batch['resampled_speech.pth'], batch['mels'],batch['filenames']
+        generator_input, wav, mel, filename = (
+            batch["ssl_feature"],
+            batch["resampled_speech.pth"],
+            batch["mels"],
+            batch["filenames"],
+        )
         wav_generator_out = self.generator(generator_input)
         predicted_mel, _ = self.calc_spectrogram(wav_generator_out)
         loss_recons = self.reconstruction_loss(mel, predicted_mel)
+        if (
+            batch_idx < self.cfg.model.logging_wav_samples
+            and self.global_rank == 0
+            and self.local_rank == 0
+        ):
+            self.log_audio(
+                wav_generator_out[0].squeeze().cpu().numpy().astype(np.float32),
+                name=f"generated/{filename[0]}",
+                sampling_rate=self.cfg.sample_rate,
+            )
+            self.log_audio(
+                wav[0].squeeze().cpu().numpy().astype(np.float32),
+                name=f"natural/{filename[0]}",
+                sampling_rate=self.cfg.sample_rate,
+            )
+
         self.log("val/reconstruction", loss_recons)
 
     def reconstruction_loss(self, mel_gt, mel_predicted):
-        return torch.nn.L1Loss()(mel_gt, mel_predicted.squeeze(1).transpose(1,2)[:,:mel_gt.size(1),:])
+        return torch.nn.L1Loss()(
+            mel_gt, mel_predicted.squeeze(1).transpose(1, 2)[:, : mel_gt.size(1), :]
+        )
 
     def calc_spectrogram(self, waveform: torch.Tensor):
         magspec = self.spec_module(waveform)
@@ -134,3 +164,21 @@ class HiFiGANLightningModule(LightningModule):
         logmelspec = torch.log(torch.clamp_min(melspec, 1.0e-5) * 1.0).to(torch.float32)
         energy = torch.norm(magspec, dim=0)
         return logmelspec, energy
+
+    def log_audio(self, audio, name, sampling_rate):
+        for logger in self.loggers:
+            match type(logger):
+                case loggers.WandbLogger:
+                    import wandb
+
+                    wandb.log(
+                        {name: wandb.Audio(audio, sample_rate=sampling_rate)},
+                        step=self.global_step,
+                    )
+                case loggers.TensorBoardLogger:
+                    logger.experiment.add_audio(
+                        name,
+                        audio,
+                        self.global_step,
+                        sampling_rate,
+                    )
