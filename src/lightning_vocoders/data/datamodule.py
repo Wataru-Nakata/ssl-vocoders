@@ -42,7 +42,7 @@ class VocoderDataModule(lightning.LightningDataModule):
             collate_fn=self.collate_fn,
             num_workers=8,
         )
-
+    @torch.no_grad()
     def collate_fn(self, batch, segment_size: int = -1):
         outputs = dict()
         if segment_size != -1:
@@ -51,6 +51,7 @@ class VocoderDataModule(lightning.LightningDataModule):
             )
             mel_hop_size = self.cfg.preprocess.stft.hop_length
             target_feature = self.cfg.data.target_feature.key
+            target_layer = self.cfg.data.target_feature.layer
             input_feature_frames_per_seg = math.ceil(
                 segment_size / input_feature_hop_size
             )
@@ -69,11 +70,11 @@ class VocoderDataModule(lightning.LightningDataModule):
                         input_feature_start * input_feature_hop_size / mel_hop_size
                     )
                     cropped_features.append(
-                        sample[target_feature][
-                            :,
+                        sample[target_feature][target_layer][
                             input_feature_start : input_feature_start
-                            + input_feature_frames_per_seg,
-                        ].T
+                            + input_feature_frames_per_seg,:
+                            
+                        ]
                     )
                     cropped_speeches.append(
                         sample["resampled_speech.pth"][
@@ -84,14 +85,14 @@ class VocoderDataModule(lightning.LightningDataModule):
                         ]
                     )
                     cropped_mels.append(
-                        sample["mel.pth"][
-                            :, mel_start : mel_start + mel_frames_per_seg
-                        ].T
+                        sample["mel.pth"][0][
+                            mel_start : mel_start + mel_frames_per_seg,:
+                        ]
                     )
                 else:
-                    cropped_features.append(sample[target_feature].T)
+                    cropped_features.append(sample[target_feature][target_layer])
                     cropped_speeches.append(sample["resampled_speech.pth"])
-                    cropped_mels.append(sample["mel.pth"].T)
+                    cropped_mels.append(sample["mel.pth"][0])
             outputs["resampled_speech.pth"] = pad_sequence(
                 cropped_speeches, batch_first=True
             )
@@ -108,19 +109,25 @@ class VocoderDataModule(lightning.LightningDataModule):
                 [b["resampled_speech.pth"] for b in batch], batch_first=True
             )
             outputs["ssl_feature"] = pad_sequence(
-                [b[self.cfg.data.target_feature.key].T for b in batch], batch_first=True
+                [
+                    b[self.cfg.data.target_feature.key][
+                        self.cfg.data.target_feature.layer
+                    ]
+                    for b in batch
+                ],
+                batch_first=True,
             )
             outputs["mels"] = pad_sequence(
-                [b["mel.pth"].T for b in batch], batch_first=True, padding_value=1e-9
+                [b["mel.pth"][0] for b in batch], batch_first=True, padding_value=1e-9
             )
-            outputs["mel_lens"] = torch.tensor([b["mel.pth"].size(1) for b in batch])
+            outputs["mel_lens"] = torch.tensor([b["mel.pth"].size(0) for b in batch])
             outputs["max_mel_len"] = outputs["mel_lens"].max()
         outputs["wav_lens"] = torch.tensor(
             [b["resampled_speech.pth"].size(0) for b in batch]
         )
 
         outputs["speech.wav"] = pad_sequence(
-            [b["speech.wav"][0].T for b in batch], batch_first=True
+            [b["speech.wav"][0][0] for b in batch], batch_first=True
         )
         outputs["filenames"] = [b["__key__"] for b in batch]
         return outputs

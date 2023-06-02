@@ -1,8 +1,8 @@
 defaults:
   - _self_
   - preprocess: default
-  - model: default
+  - model: hifigan_ssl
   - train: default
-  - data: default
+  - data: wav_lm
 sample_rate: 22050
 compile: False

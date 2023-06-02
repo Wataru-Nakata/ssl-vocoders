@@ -4,6 +4,7 @@ trainer:
   devices: [0]
   precision: 32
   check_val_every_n_epoch: 10
+  max_epochs: 3300
 
 loggers:
   - _target_: lightning.pytorch.loggers.TensorBoardLogger

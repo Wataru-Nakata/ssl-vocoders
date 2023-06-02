@@ -165,8 +165,10 @@ class HiFiGANLightningModule(LightningModule):
         self.log("val/reconstruction", loss_recons)
 
     def reconstruction_loss(self, mel_gt, mel_predicted):
+        length = min(mel_gt.size(1), mel_predicted.size(1))
         return torch.nn.L1Loss()(
-            mel_gt, mel_predicted.squeeze(1).transpose(1, 2)[:, : mel_gt.size(1), :]
+            mel_gt[:, :length, :],
+            mel_predicted.squeeze(1).transpose(1, 2)[:, :length, :],
         )
 
     def calc_spectrogram(self, waveform: torch.Tensor):

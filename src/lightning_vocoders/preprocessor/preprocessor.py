@@ -47,7 +47,7 @@ class Preprocessor:
             "__key__": basename,
             "speech.wav": wav_bytes,
             "resampled_speech.pth": webdataset.torch_dumps(waveform),
-            "mel.pth": webdataset.torch_dumps(mel_spec),
+            "mel.pth": webdataset.torch_dumps(mel_spec.T.unsqueeze(0)),
         }
         for ssl_model, processor, sample_rate_ssl, sample_key in self.ssl_models:
             wav_tensor = torchaudio.functional.resample(
@@ -59,7 +59,9 @@ class Preprocessor:
             inputs.to("cuda")
             ssl_model.to("cuda")
             output = ssl_model(**inputs, output_hidden_states=True)
-            sample[sample_key] = webdataset.torch_dumps(output.last_hidden_state.cpu())
+            sample[sample_key] = webdataset.torch_dumps(
+                torch.cat(output.hidden_states).cpu()
+            )
 
         return sample
 
