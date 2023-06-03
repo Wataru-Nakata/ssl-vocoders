@@ -35,7 +35,7 @@ class VocoderDataModule(lightning.LightningDataModule):
             collate_fn=lambda batch: self.collate_fn(
                 batch, self.cfg.model.train_segment_size
             ),
-            num_workers=8,
+            num_workers=0,
         )
 
     def val_dataloader(self):
@@ -43,7 +43,7 @@ class VocoderDataModule(lightning.LightningDataModule):
             self.val_dataset,
             batch_size=self.cfg.data.val_batch_size,
             collate_fn=self.collate_fn,
-            num_workers=8,
+            num_workers=0,
         )
 
     @torch.no_grad()

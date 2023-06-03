@@ -31,9 +31,9 @@ val_size: 3000
 ssl_models:
   - 
     - _target_: transformers.AutoModel.from_pretrained
-      pretrained_model_name_or_path: "microsoft/wavlm-base"
+      pretrained_model_name_or_path: "facebook/wav2vec2-base"
     - _target_: transformers.AutoFeatureExtractor.from_pretrained
-      pretrained_model_name_or_path: "microsoft/wavlm-base"
+      pretrained_model_name_or_path: "facebook/wav2vec2-base"
     - sr: 16_000
-      key: wavlm-base.pth
+      key: wav2vec2-base.pth
       layer: 12

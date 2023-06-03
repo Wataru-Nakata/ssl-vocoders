@@ -34,4 +34,4 @@ loss:
   g_mpd_coef: 1
   g_msd_coef: 1
 logging_wav_samples: 10
-train_segment_size: 8192
+train_segment_size: 32_000
