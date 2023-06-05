@@ -15,8 +15,40 @@ from .hifigan import (
 import torch
 import hydra
 import torchaudio
+import transformers
 
 
+class Preprocessor(torch.nn.Module):
+    def __init__(self, cfg:DictConfig) -> None:
+        super().__init__()
+        self.resampler = torchaudio.transforms.Resample(cfg.sample_rate,16_000)
+        self.mel_spec = torchaudio.transforms.MelSpectrogram(
+            cfg.sample_rate,
+            cfg.preprocess.stft.n_fft,
+            cfg.preprocess.stft.win_length,
+            cfg.preprocess.stft.hop_length,
+            cfg.preprocess.mel.f_min,
+            cfg.preprocess.mel.f_max,
+            n_mels=cfg.preprocess.mel.n_mels,
+        )
+        self.ssl_model = transformers.AutoModel.from_pretrained("facebook/wav2vec2-base")
+        self.ssl_prepreocessor = transformers.AutoFeatureExtractor.from_pretrained("facebook/wav2vec2-base")
+        self.ssl_model.eval()
+    @torch.no_grad()
+    def forward(self,waveform):
+        logmelspec = self.get_logmelspec(waveform)
+        resampled_wav = self.resampler(waveform)
+        ssl_input = self.ssl_prepreocessor(resampled_wav.cpu().numpy().tolist(),return_tensors="pt", sampling_rate=16_000,padding=True)
+        ssl_input.to(self.device)
+        ssl_feature = self.ssl_model(**ssl_input).last_hidden_state
+        return logmelspec,ssl_feature
+    def get_logmelspec(self,waveform):
+        melspec = self.mel_spec(waveform)
+        logmelspec = torch.log(torch.clamp_min(melspec, 1.0e-5) * 1.0).to(torch.float32)
+        return logmelspec
+    @property
+    def device(self):
+        return next(self.parameters()).device
 class HiFiGANLightningModule(LightningModule):
     def __init__(self, cfg: DictConfig) -> None:
         super().__init__()
@@ -24,8 +56,7 @@ class HiFiGANLightningModule(LightningModule):
         self.multi_period_discriminator = MultiPeriodDiscriminator()
         self.multi_scale_discriminator = MultiScaleDiscriminator()
         self.automatic_optimization = False
-        self.spec_module = torchaudio.transforms.Spectrogram(**cfg.preprocess.stft)
-        self.mel_scale = torchaudio.transforms.MelScale(**cfg.preprocess.mel)
+        self.preprocessor = Preprocessor(cfg)
         self.cfg = cfg
         self.save_hyperparameters()
 
@@ -53,14 +84,16 @@ class HiFiGANLightningModule(LightningModule):
         ]
 
     def training_step(self, batch, batch_idx) -> STEP_OUTPUT:
-        generator_input, wav, mel, _ = (
-            batch["ssl_feature"],
+        wav,  _ = (
             batch["resampled_speech.pth"],
-            batch["mels"],
             batch["filenames"],
         )
+        mel, generator_input = self.preprocessor(wav)
         wav = wav.unsqueeze(1)
         wav_generator_out = self.generator(generator_input)
+        output_length = min(wav_generator_out.size(2),wav.size(2))
+        wav = wav[:,:,:output_length]
+        wav_generator_out = wav_generator_out[:,:,:output_length]
 
         opt_g, opt_d = self.optimizers()
         sch_g, sch_d = self.lr_schedulers()
@@ -94,7 +127,7 @@ class HiFiGANLightningModule(LightningModule):
 
         # generator
         opt_g.zero_grad()
-        predicted_mel, _ = self.calc_spectrogram(wav_generator_out)
+        predicted_mel = self.preprocessor.get_logmelspec(wav_generator_out.squeeze(1))
         loss_recons = self.reconstruction_loss(mel, predicted_mel)
         loss_g = loss_recons * self.cfg.model.loss.recons_coef
         if self.global_step >= self.cfg.model.adversarial_start_step:
@@ -132,15 +165,14 @@ class HiFiGANLightningModule(LightningModule):
         sch_g.step()
 
     def validation_step(self, batch, batch_idx) -> STEP_OUTPUT | None:
-        generator_input, wav, mel, filename, wav_lens = (
-            batch["ssl_feature"],
+        wav,  filename, wav_lens = (
             batch["resampled_speech.pth"],
-            batch["mels"],
             batch["filenames"],
             batch["wav_lens"],
         )
+        mel, generator_input = self.preprocessor(wav)
         wav_generator_out = self.generator(generator_input)
-        predicted_mel, _ = self.calc_spectrogram(wav_generator_out)
+        predicted_mel = self.preprocessor.get_logmelspec(wav_generator_out.squeeze(1))
         loss_recons = self.reconstruction_loss(mel, predicted_mel)
         if (
             batch_idx < self.cfg.model.logging_wav_samples
@@ -165,18 +197,11 @@ class HiFiGANLightningModule(LightningModule):
         self.log("val/reconstruction", loss_recons)
 
     def reconstruction_loss(self, mel_gt, mel_predicted):
-        length = min(mel_gt.size(1), mel_predicted.size(1))
+        length = min(mel_gt.size(2), mel_predicted.size(2))
         return torch.nn.L1Loss()(
-            mel_gt[:, :length, :],
-            mel_predicted.squeeze(1).transpose(1, 2)[:, :length, :],
+            mel_gt[:, :, :length],
+            mel_predicted[:, :, :length],
         )
-
-    def calc_spectrogram(self, waveform: torch.Tensor):
-        magspec = self.spec_module(waveform)
-        melspec = self.mel_scale(magspec)
-        logmelspec = torch.log(torch.clamp_min(melspec, 1.0e-5) * 1.0).to(torch.float32)
-        energy = torch.norm(magspec, dim=0)
-        return logmelspec, energy
 
     def log_audio(self, audio, name, sampling_rate):
         for logger in self.loggers:
