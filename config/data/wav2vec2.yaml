@@ -4,10 +4,16 @@ train_dataset_path: preprocessed_data/glob/glob-train-{000000..000006}.tar.gz
 val_dataset_path: preprocessed_data/glob/glob-val-{000000..000002}.tar.gz
 
 
-train_batch_size: 8
+train_batch_size: 16
 val_batch_size: 8
 
 target_feature: 
   key: wav2vec2-base.pth
   samples_per_sec: 50 # 22050/256
+  bias: 0.0025
   layer: 12
+
+segment_size:
+  train: 50
+  val: -1 # -1 for not segmenting the sample
+

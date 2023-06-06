@@ -10,4 +10,8 @@ val_batch_size: 8
 target_feature: 
   key: mel.pth
   samples_per_sec: 86.1328125 # 22050/256
-  layer: 0
+  bias: 0
+
+segment_size:
+  train: 4096
+  val: -1 # -1 for not segmenting the sample

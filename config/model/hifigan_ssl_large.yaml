@@ -2,7 +2,7 @@ lightning_module:
   _target_: lightning_vocoders.models.hifigan.lightning_module.HiFiGANLightningModule
 
 generator:
-  num_input_channels: 768
+  num_input_channels: 1024
   upsample_rates: [7,7,3,3]
   upsample_initial_channel: 512
   upsample_kernel_sizes: [15,15,7,7]

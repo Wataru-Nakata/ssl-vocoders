@@ -31,24 +31,11 @@ class Preprocessor(torch.nn.Module):
             cfg.preprocess.mel.f_max,
             n_mels=cfg.preprocess.mel.n_mels,
         )
-        self.ssl_model = transformers.AutoModel.from_pretrained("facebook/wav2vec2-base")
-        self.ssl_prepreocessor = transformers.AutoFeatureExtractor.from_pretrained("facebook/wav2vec2-base")
-        self.ssl_model.eval()
-    @torch.no_grad()
-    def forward(self,waveform):
-        logmelspec = self.get_logmelspec(waveform)
-        resampled_wav = self.resampler(waveform)
-        ssl_input = self.ssl_prepreocessor(resampled_wav.cpu().numpy().tolist(),return_tensors="pt", sampling_rate=16_000,padding=True)
-        ssl_input.to(self.device)
-        ssl_feature = self.ssl_model(**ssl_input).last_hidden_state
-        return logmelspec,ssl_feature
     def get_logmelspec(self,waveform):
         melspec = self.mel_spec(waveform)
         logmelspec = torch.log(torch.clamp_min(melspec, 1.0e-5) * 1.0).to(torch.float32)
         return logmelspec
-    @property
-    def device(self):
-        return next(self.parameters()).device
+
 class HiFiGANLightningModule(LightningModule):
     def __init__(self, cfg: DictConfig) -> None:
         super().__init__()
@@ -84,11 +71,12 @@ class HiFiGANLightningModule(LightningModule):
         ]
 
     def training_step(self, batch, batch_idx) -> STEP_OUTPUT:
-        wav,  _ = (
+        wav,generator_input,  _ = (
             batch["resampled_speech.pth"],
+            batch["input_feature"],
             batch["filenames"],
         )
-        mel, generator_input = self.preprocessor(wav)
+        mel = self.preprocessor.get_logmelspec(wav)
         wav = wav.unsqueeze(1)
         wav_generator_out = self.generator(generator_input)
         output_length = min(wav_generator_out.size(2),wav.size(2))
@@ -165,12 +153,13 @@ class HiFiGANLightningModule(LightningModule):
         sch_g.step()
 
     def validation_step(self, batch, batch_idx) -> STEP_OUTPUT | None:
-        wav,  filename, wav_lens = (
+        wav, generator_input, filename, wav_lens = (
             batch["resampled_speech.pth"],
+            batch["input_feature"],
             batch["filenames"],
             batch["wav_lens"],
         )
-        mel, generator_input = self.preprocessor(wav)
+        mel = self.preprocessor.get_logmelspec(wav)
         wav_generator_out = self.generator(generator_input)
         predicted_mel = self.preprocessor.get_logmelspec(wav_generator_out.squeeze(1))
         loss_recons = self.reconstruction_loss(mel, predicted_mel)

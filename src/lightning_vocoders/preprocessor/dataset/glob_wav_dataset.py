@@ -18,4 +18,4 @@ class GlobWavDataset(Dataset):
 
     def __getitem__(self,idx):
         wav_path = self.wav_files[idx]
-        return wav_path.stem, torchaudio.load(wav_path)
+        return wav_path.stem, torchaudio.load(wav_path),str(wav_path)

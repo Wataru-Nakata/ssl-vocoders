@@ -3,7 +3,7 @@ trainer:
   accelerator: "gpu"
   devices: [0]
   precision: 32
-  check_val_every_n_epoch: 10
+  check_val_every_n_epoch: 4
   max_epochs: 3300
 
 loggers:

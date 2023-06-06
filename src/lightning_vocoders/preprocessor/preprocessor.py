@@ -6,6 +6,7 @@ from omegaconf import DictConfig
 import numpy as np
 import webdataset
 import tqdm
+from torch.utils.data import DataLoader
 
 
 class Preprocessor:
@@ -29,9 +30,10 @@ class Preprocessor:
     def process_utterance(
         self,
         basename: str,
-        audio_file_path: pathlib.Path,
+        orig_waveform: torch.Tensor,
+        sample_rate: int,
+        audio_file_path
     ):
-        orig_waveform, sample_rate = torchaudio.load(audio_file_path)
 
         waveform = torchaudio.functional.resample(
             orig_waveform, sample_rate, new_freq=self.sampling_rate
@@ -68,10 +70,13 @@ class Preprocessor:
     def build_from_path(self):
         train_sink = hydra.utils.instantiate(self.cfg.preprocess.train_tar_sink)
         val_sink = hydra.utils.instantiate(self.cfg.preprocess.val_tar_sink)
-        for idx, (basename, wav_file_path) in tqdm.tqdm(enumerate(self.dataset)):
+        dataloader = DataLoader(self.dataset,batch_size=1)
+        for idx, (basename, (wav,sr),wav_path) in tqdm.tqdm(enumerate(dataloader)):
             sample = self.process_utterance(
-                basename,
-                wav_file_path,
+                basename[0],
+                wav[0],
+                sr[0],
+                wav_path[0]
             )
             if idx >= self.cfg.preprocess.val_size:
                 train_sink.write(sample)
