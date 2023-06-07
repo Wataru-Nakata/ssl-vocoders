@@ -68,10 +68,11 @@ class Preprocessor:
         return sample
 
     def build_from_path(self):
+        pathlib.Path("/".join(self.cfg.preprocess.train_tar_sink.pattern.split("/")[:-1])).mkdir(exist_ok=True)
         train_sink = hydra.utils.instantiate(self.cfg.preprocess.train_tar_sink)
         val_sink = hydra.utils.instantiate(self.cfg.preprocess.val_tar_sink)
         dataloader = DataLoader(self.dataset,batch_size=1)
-        for idx, (basename, (wav,sr),wav_path) in tqdm.tqdm(enumerate(dataloader)):
+        for idx, (basename, (wav,sr),wav_path) in enumerate(tqdm.tqdm(dataloader)):
             sample = self.process_utterance(
                 basename[0],
                 wav[0],
