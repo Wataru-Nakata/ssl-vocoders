@@ -1,5 +1,5 @@
 #! /bin/bash
-#$ -l rt_AG.small
+#$ -l rt_AG.small=1
 #$ -l h_rt=72:00:00
 #$ -j y
 #$-cwd
