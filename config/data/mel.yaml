@@ -13,5 +13,5 @@ target_feature:
   bias: 0
 
 segment_size:
-  train: 4096
+  train: 16
   val: -1 # -1 for not segmenting the sample
