@@ -1,3 +1,8 @@
+#! /bin/bash
+#$ -l rt_AG.small
+#$ -l h_rt=72:00:00
+#$ -j y
+#$-cwd
 source /etc/profile.d/modules.sh
 module load python/3.10/3.10.10
 module load cuda/12.1/12.1.1
