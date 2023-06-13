@@ -3,6 +3,6 @@ defaults:
   - preprocess: default
   - model: hifigan_ssl
   - train: default
-  - data: wav2vec2
+  - data: wav2vec2_base
 sample_rate: 22050
 compile: False
