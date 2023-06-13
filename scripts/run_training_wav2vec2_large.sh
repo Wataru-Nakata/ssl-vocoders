@@ -1,0 +1,1 @@
+python3 src/train.py preprocess=wav2vec2-base model=hifigan_ssl data=wav2vec2_base

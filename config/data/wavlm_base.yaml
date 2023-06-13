@@ -10,4 +10,9 @@ val_batch_size: 8
 target_feature: 
   key: wavlm-base.pth
   samples_per_sec: 50 # 22050/256
+  bias: 0.0025
   layer: 12
+
+segment_size:
+  train: 50
+  val: -1 # -1 for not segmenting the sample

@@ -1,0 +1,1 @@
+python3 src/train.py preprocess=wav2vec2-base model=hifigan_ssl data=wav2vec2_base data.train_dataset_path=/scratch/acc12576tt/wav2vec2_base/wav2vec2_base-train-{000000..000119}.tar.gz data.val_dataset_path=/scratch/acc12576tt/wav2vec2_base/wav2vec2_base-val-{000000..000001}.tar.gz
