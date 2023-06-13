@@ -9,4 +9,4 @@ module load cuda/12.1/12.1.1
 module load cudnn/8.9/8.9.2
 module load nccl/2.18/2.18.1-1
 source venv/bin/activate
-python3 src/train.py preprocess=wavlm_base model=hifigan_ssl data=wavlm_base 
+python3 src/train.py preprocess=hubert_large model=hifigan_ssl_large data=hubert_large
