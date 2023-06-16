@@ -9,4 +9,4 @@ module load cuda/12.1/12.1.1
 module load cudnn/8.9/8.9.2
 module load nccl/2.18/2.18.1-1
 source venv/bin/activate
-python3 src/train.py preprocess=hubert_base model=hifigan_ssl data=hubert_base 'train.ckpt_path="/home/acc12576tt/lightning-vocoders/tb_logs/lightning_logs/version_5/checkpoints/epoch=57-step=730196.ckpt"'
+python3 src/train.py preprocess=hubert_base model=hifigan_ssl data=hubert_base 'train.ckpt_path="/home/acc12576tt/model-hubert-base.ckpt"'
