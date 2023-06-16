@@ -6,6 +6,8 @@ trainer:
   check_val_every_n_epoch: 1
   max_epochs: 3300
 
+ckpt_path: 
+
 loggers:
   - _target_: lightning.pytorch.loggers.TensorBoardLogger
     save_dir: "tb_logs"

@@ -22,7 +22,7 @@ def main(cfg: DictConfig):
     trainer = hydra.utils.instantiate(
         cfg.train.trainer, logger=loggers, callbacks=callbacks
     )
-    trainer.fit(lightning_module, datamodule)
+    trainer.fit(lightning_module, datamodule,ckpt_path=cfg.train.ckpt_path)
 
 
 if __name__ == "__main__":
