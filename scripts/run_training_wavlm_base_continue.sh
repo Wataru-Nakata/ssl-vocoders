@@ -9,4 +9,4 @@ module load cuda/12.1/12.1.1
 module load cudnn/8.9/8.9.2
 module load nccl/2.18/2.18.1-1
 source venv/bin/activate
-python3 src/train.py preprocess=wavlm_base model=hifigan_ssl data=wavlm_base train.ckpt_path="/home/acc12576tt/lightning-vocoders/tb_logs/lightning_logs/version_3/checkpoints/epoch\=56-step\=717434.ckpt"
+python3 src/train.py preprocess=wavlm_base model=hifigan_ssl data=wavlm_base 'train.ckpt_path="/home/acc12576tt/lightning-vocoders/tb_logs/lightning_logs/version_3/checkpoints/epoch=56-step=717434.ckpt"'
