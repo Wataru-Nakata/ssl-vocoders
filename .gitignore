@@ -163,3 +163,7 @@ preprocessed_data/
 outputs/
 tb_logs/
 wandb/
+events.out.tfevents*
+hparams.yaml
+*.ckpt
+synthesized/

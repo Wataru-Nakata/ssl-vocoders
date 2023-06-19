@@ -16,6 +16,7 @@ import torch
 import hydra
 import torchaudio
 import transformers
+from pathlib import Path
 
 
 class Preprocessor(torch.nn.Module):
@@ -184,6 +185,17 @@ class HiFiGANLightningModule(LightningModule):
             )
 
         self.log("val/reconstruction", loss_recons)
+    def on_test_start(self) -> None:
+        Path(f"synthesized/{self.cfg.data.target_feature.key}").mkdir(exist_ok=True,parents=True)
+    def test_step(self,batch,batch_idx):
+        generator_input  = batch["input_feature"]
+        wav_generator_out = self.generator(generator_input)
+        return wav_generator_out
+    def on_test_batch_end(self, outputs: STEP_OUTPUT | None, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> None:
+        for output,filename in zip(outputs,batch["filenames"]):
+            torchaudio.save(filepath=f"synthesized/{self.cfg.data.target_feature.key}/{filename}.wav",src=output.cpu(),sample_rate=self.cfg.sample_rate)
+        return
+
 
     def reconstruction_loss(self, mel_gt, mel_predicted):
         length = min(mel_gt.size(2), mel_predicted.size(2))
