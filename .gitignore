@@ -167,3 +167,4 @@ events.out.tfevents*
 hparams.yaml
 *.ckpt
 synthesized/
+*.wav

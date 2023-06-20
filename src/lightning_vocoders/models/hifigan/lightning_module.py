@@ -4,6 +4,7 @@ from lightning.pytorch import LightningModule, loggers
 from lightning.pytorch.utilities.types import STEP_OUTPUT
 from omegaconf import DictConfig
 import numpy as np
+from webdataset import resampled
 from .hifigan import (
     Generator,
     MultiPeriodDiscriminator,
@@ -186,14 +187,15 @@ class HiFiGANLightningModule(LightningModule):
 
         self.log("val/reconstruction", loss_recons)
     def on_test_start(self) -> None:
-        Path(f"synthesized/{self.cfg.data.target_feature.key}").mkdir(exist_ok=True,parents=True)
+        Path(f"{self.output_path}").mkdir(exist_ok=True,parents=True)
     def test_step(self,batch,batch_idx):
         generator_input  = batch["input_feature"]
         wav_generator_out = self.generator(generator_input)
         return wav_generator_out
     def on_test_batch_end(self, outputs: STEP_OUTPUT | None, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> None:
-        for output,filename in zip(outputs,batch["filenames"]):
-            torchaudio.save(filepath=f"synthesized/{self.cfg.data.target_feature.key}/{filename}.wav",src=output.cpu(),sample_rate=self.cfg.sample_rate)
+        for output,filename,resampled in zip(outputs,batch["filenames"],batch["resampled_speech.pth"]):
+            torchaudio.save(filepath=f"{self.output_path}/{filename}.wav",src=output.cpu(),sample_rate=self.cfg.sample_rate)
+            torchaudio.save(filepath=f"{self.output_path}/{filename}_gt.wav",src=resampled.unsqueeze(0).cpu(),sample_rate=self.cfg.sample_rate)
         return
 
 
