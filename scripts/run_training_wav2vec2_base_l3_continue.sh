@@ -9,4 +9,4 @@ module load cuda/12.1/12.1.1
 module load cudnn/8.9/8.9.2
 module load nccl/2.18/2.18.1-1
 source venv/bin/activate
-python3 src/train.py preprocess=wav2vec2_base_l3 model=hifigan_ssl data=wav2vec2_base_l3 'train.ckpt_path="/home/acc12576tt/checkpoints/wav2vec2_l3"'
+python3 src/train.py preprocess=wav2vec2_base_l3 model=hifigan_ssl data=wav2vec2_base_l3 'train.ckpt_path="/home/acc12576tt/checkpoints/wav2vec2_l3/model.ckpt"'
