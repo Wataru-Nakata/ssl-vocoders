@@ -1,0 +1,18 @@
+datamodule:
+  _target_: lightning_vocoders.data.datamodule.VocoderDataModule
+train_dataset_path: /scratch/acc12576tt/wavlm_base_l3/wavlm_base_l3-train-{000000..000119}.tar.gz
+val_dataset_path: /scratch/acc12576tt/wavlm_base_l3/wavlm_base_l3-val-{000000..000001}.tar.gz
+
+
+train_batch_size: 32
+val_batch_size: 8
+
+target_feature: 
+  key: wavlm-base-3.pth
+  samples_per_sec: 50 # 22050/256
+  bias: 0.0025
+  layer: 12
+
+segment_size:
+  train: 50
+  val: -1 # -1 for not segmenting the sample
