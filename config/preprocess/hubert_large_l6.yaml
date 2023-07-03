@@ -21,10 +21,10 @@ defaults:
 
 train_tar_sink:
   _target_: webdataset.ShardWriter
-  pattern: "preprocessed_data/hubert_large_l6/hubert_large_l6-train-%06d.tar.gz"
+  pattern: "/mnt/hdd/preprocessed_data/hubert_large_l6/hubert_large_l6-train-%06d.tar.gz"
 val_tar_sink:
   _target_: webdataset.ShardWriter
-  pattern: "preprocessed_data/hubert_large_l6/hubert_large_l6-val-%06d.tar.gz"
+  pattern: "/mnt/hdd/preprocessed_data/hubert_large_l6/hubert_large_l6-val-%06d.tar.gz"
 val_size: 3000
 
 

@@ -37,6 +37,7 @@ datashader==0.14.4
 datashape==0.5.2
 dateutils==0.6.12
 deepdiff==6.3.0
+dill==0.3.6
 docker-pycreds==0.4.0
 exceptiongroup==1.1.1
 fastapi==0.88.0
@@ -96,6 +97,7 @@ oauthlib==3.2.2
 omegaconf==2.3.0
 ordered-set==4.1.0
 packaging==23.1
+pandarallel==1.6.5
 pandas==2.0.2
 panel==1.0.3
 param==1.13.0
