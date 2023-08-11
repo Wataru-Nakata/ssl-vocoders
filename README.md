@@ -1,3 +1,2 @@
-# lightning-vocoders
-
-Describe your project here.
+# ssl-vocoders
+This repository contains training script for creating vocoders from 

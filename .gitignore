@@ -168,3 +168,6 @@ hparams.yaml
 *.ckpt
 synthesized/
 *.wav
+*.log
+notebooks/
+.idea/

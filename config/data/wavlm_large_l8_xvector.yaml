@@ -3,14 +3,24 @@ datamodule:
 train_dataset_path: /scratch/acc12576tt/wavlm_large_l6/wavlm_large_l6-train-{000000..000138}.tar.gz
 val_dataset_path: /scratch/acc12576tt/wavlm_large_l6/wavlm_large_l6-val-{000000..000002}.tar.gz
 
+xvector:
+  use_xvector: True
+  model:
+    _target_: speechbrain.pretrained.EncoderClassifier.from_hparams
+    source: "speechbrain/spkrec-xvect-voxceleb"
+    savedir: "pretrained_models/spkrec-xvect-voxceleb"
+  sr: 16_000
+  extract_secs: 5.0
+  embedding_size: 512
+
 train_batch_size: 32
 val_batch_size: 8
 
 target_feature: 
-  key: wavlm-large-6.pth
+  key: wavlm-large-8.pth
   samples_per_sec: 50 # 22050/256
   bias: 0.0025
-  layer: 6
+  layer: 8
 
 segment_size:
   train: 50

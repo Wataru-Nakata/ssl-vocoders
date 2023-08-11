@@ -20,7 +20,7 @@ class VocoderDataModule(lightning.LightningDataModule):
 
     def setup(self, stage: str):
         self.train_dataset = (
-            wds.WebDataset(self.cfg.data.train_dataset_path)
+            wds.WebDataset(self.cfg.data.train_dataset_path,resampled=True)
             .shuffle(1000)
             .decode(wds.torch_audio)
         )
@@ -98,6 +98,10 @@ class VocoderDataModule(lightning.LightningDataModule):
         outputs["wav_lens"] = torch.tensor(
             [b["resampled_speech.pth"].size(0) for b in batch]
         )
+        if self.cfg.data.xvector.use_xvector:
+            outputs["xvector"] = torch.stack(
+                [b["xvector.pth"] for b in batch]
+            )
 
         outputs["filenames"] = [b["__key__"] for b in batch]
         return outputs

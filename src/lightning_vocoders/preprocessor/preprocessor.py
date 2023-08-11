@@ -25,6 +25,16 @@ class Preprocessor:
         self.mel_scale = torchaudio.transforms.MelScale(**cfg.preprocess.mel)
         self.sampling_rate = self.cfg.sample_rate
         self.ssl_models = hydra.utils.instantiate(cfg.preprocess.ssl_models)
+        if hasattr(cfg.data, "xvector"):
+            self.use_xvector = cfg.data.xvector.use_xvector
+        else:
+            self.use_xvector = False
+        if self.use_xvector:
+            self.xvector_model = hydra.utils.instantiate(self.cfg.data.xvector.model)
+            self.xvector_model.eval()
+            self.xvector_sr = self.cfg.data.xvector.sr
+            self.xvector_extract_secs = self.cfg.data.xvector.extract_secs
+            self.xvector_embedding_size = self.cfg.data.xvector.embedding_size
 
     @torch.no_grad()
     def process_utterance(
@@ -64,6 +74,13 @@ class Preprocessor:
             sample[feature_cfg.key] = webdataset.torch_dumps(
                 output.hidden_states[feature_cfg.layer][0].cpu()
             )
+        if self.use_xvector:
+            resampled_for_xvector = torchaudio.functional.resample(
+                    orig_waveform, sample_rate, self.xvector_sr
+                ).squeeze()[: int(self.xvector_sr * self.xvector_extract_secs)]
+            embeddings = self.xvector_model.encode_batch(resampled_for_xvector.unsqueeze(0))
+            sample["xvector.pth"] = embeddings.view(self.xvector_embedding_size)
+
 
         return sample
 

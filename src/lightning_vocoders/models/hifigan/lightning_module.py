@@ -71,6 +71,11 @@ class HiFiGANLightningModule(LightningModule):
             {"name": "scheduler_g", "scheduler": scheduler_g},
             {"name": "scheduler_d", "scheduler": scheduler_d},
         ]
+    
+    def generator_forward(self,batch):
+        generator_input = batch["input_feature"],
+        wav_generator_out = self.generator(generator_input)
+        return wav_generator_out
 
     def training_step(self, batch, batch_idx) -> STEP_OUTPUT:
         wav,generator_input,  _ = (
@@ -80,7 +85,7 @@ class HiFiGANLightningModule(LightningModule):
         )
         mel = self.preprocessor.get_logmelspec(wav)
         wav = wav.unsqueeze(1)
-        wav_generator_out = self.generator(generator_input)
+        wav_generator_out = self.generator_forward(batch)
         output_length = min(wav_generator_out.size(2),wav.size(2))
         wav = wav[:,:,:output_length]
         wav_generator_out = wav_generator_out[:,:,:output_length]
@@ -162,7 +167,7 @@ class HiFiGANLightningModule(LightningModule):
             batch["wav_lens"],
         )
         mel = self.preprocessor.get_logmelspec(wav)
-        wav_generator_out = self.generator(generator_input)
+        wav_generator_out = self.generator_forward(batch)
         predicted_mel = self.preprocessor.get_logmelspec(wav_generator_out.squeeze(1))
         loss_recons = self.reconstruction_loss(mel, predicted_mel)
         if (
@@ -190,7 +195,7 @@ class HiFiGANLightningModule(LightningModule):
         Path(f"{self.output_path}").mkdir(exist_ok=True,parents=True)
     def test_step(self,batch,batch_idx):
         generator_input  = batch["input_feature"]
-        wav_generator_out = self.generator(generator_input)
+        wav_generator_out = self.generator_forward(batch)
         return wav_generator_out
     def on_test_batch_end(self, outputs: STEP_OUTPUT | None, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> None:
         for output,filename,resampled in zip(outputs,batch["filenames"],batch["resampled_speech.pth"]):
