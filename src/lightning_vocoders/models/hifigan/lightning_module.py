@@ -73,7 +73,7 @@ class HiFiGANLightningModule(LightningModule,object):
         ]
     
     def generator_forward(self,batch):
-        generator_input = batch["input_feature"],
+        generator_input = batch["input_feature"]
         wav_generator_out = self.generator(generator_input)
         return wav_generator_out
 

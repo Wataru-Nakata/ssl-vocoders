@@ -20,7 +20,7 @@ class VocoderDataModule(lightning.LightningDataModule):
 
     def setup(self, stage: str):
         self.train_dataset = (
-            wds.WebDataset(self.cfg.data.train_dataset_path,resampled=True)
+            wds.WebDataset(self.cfg.data.train_dataset_path)
             .shuffle(1000)
             .decode(wds.torch_audio)
         )
@@ -35,7 +35,7 @@ class VocoderDataModule(lightning.LightningDataModule):
             collate_fn=lambda batch: self.collate_fn(
                 batch, self.cfg.data.segment_size.train
             ),
-            num_workers=16,
+            num_workers=8,
         )
 
     def val_dataloader(self):
@@ -45,7 +45,7 @@ class VocoderDataModule(lightning.LightningDataModule):
             collate_fn=lambda batch: self.collate_fn(
                 batch, self.cfg.data.segment_size.val
             ),
-            num_workers=16,
+            num_workers=8,
         )
 
     @torch.no_grad()

@@ -1,7 +1,7 @@
 datamodule:
   _target_: lightning_vocoders.data.datamodule.VocoderDataModule
-train_dataset_path: /mnt/hdd/lightning_vocoder/wavlm_large_l8_xvector/wavlm_large_l8-train-{000000..000138}.tar.gz
-val_dataset_path: /mnt/hdd/lightning_vocoder/wavlm_large_l8_xvector/wavlm_large_l8-val-{000000..000002}.tar.gz
+train_dataset_path: /scratch/acc12576tt/lightning_vocoder/wavlm_large_l8_xvector/wavlm_large_l8-train-{000000..000138}.tar.gz
+val_dataset_path: /scratch/acc12576tt/lightning_vocoder/wavlm_large_l8_xvector/wavlm_large_l8-val-{000000..000002}.tar.gz
 
 xvector:
   use_xvector: True

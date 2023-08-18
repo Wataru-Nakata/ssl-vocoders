@@ -1,2 +1,3 @@
-def hello():
-    return "Hello from lightning-vocoders!"
+
+def _load_model(model_name):
+    raise NotImplementedError("TODO: Implement this function")
