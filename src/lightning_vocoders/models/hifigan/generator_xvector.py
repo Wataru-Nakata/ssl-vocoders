@@ -1,5 +1,5 @@
 from .hifigan import weight_norm,Conv1d,ResBlock1,ResBlock2,ConvTranspose1d,init_weights,remove_weight_norm, LRELU_SLOPE
-import torch.functional as F
+import torch.nn.functional as F
 import torch.nn as nn
 import torch
 
@@ -20,7 +20,7 @@ class FiLMLayer(nn.Module):
         return output
 class GeneratorWithXvector(torch.nn.Module):
     def __init__(self, h):
-        super(self).__init__()
+        super().__init__()
         self.h = h
         self.num_kernels = len(h.resblock_kernel_sizes)
         self.num_upsamples = len(h.upsample_rates)
@@ -58,7 +58,7 @@ class GeneratorWithXvector(torch.nn.Module):
         self.conv_post.apply(init_weights)
 
     def forward(self, feature,xvector):
-        x = self.feature_xvector_film(feature,xvector)
+        x = self.feature_xvector_film(feature,xvector.unsqueeze(1))
         x = self.conv_pre(x.transpose(1, 2))
         for i in range(self.num_upsamples):
             x = F.leaky_relu(x, LRELU_SLOPE)

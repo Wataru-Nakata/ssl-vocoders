@@ -38,7 +38,7 @@ class Preprocessor(torch.nn.Module):
         logmelspec = torch.log(torch.clamp_min(melspec, 1.0e-5) * 1.0).to(torch.float32)
         return logmelspec
 
-class HiFiGANLightningModule(LightningModule):
+class HiFiGANLightningModule(LightningModule,object):
     def __init__(self, cfg: DictConfig) -> None:
         super().__init__()
         self.generator = Generator(cfg.model.generator)

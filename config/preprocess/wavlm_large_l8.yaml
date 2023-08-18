@@ -21,10 +21,10 @@ defaults:
 
 train_tar_sink:
   _target_: webdataset.ShardWriter
-  pattern: "/mnt/hdd/lightning_vocoder/wavlm_large_l8/wavlm_large_l8-train-%06d.tar.gz"
+  pattern: "/mnt/hdd/lightning_vocoder/wavlm_large_l8_xvector/wavlm_large_l8-train-%06d.tar.gz"
 val_tar_sink:
   _target_: webdataset.ShardWriter
-  pattern: "/mnt/hdd/lightning_vocoder/wavlm_large_l8/wavlm_large_l8-val-%06d.tar.gz"
+  pattern: "/mnt/hdd/lightning_vocoder/wavlm_large_l8_xvector/wavlm_large_l8-val-%06d.tar.gz"
 val_size: 3000
 
 
