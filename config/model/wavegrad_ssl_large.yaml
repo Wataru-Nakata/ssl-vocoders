@@ -1,0 +1,32 @@
+lightning_module: 
+  _target_: lightning_vocoders.models.wavegrad.lightning_module.WaveGradLightningModule
+
+model_params:
+  n_input_channels: 1024
+  upsamples: 
+    - [768,512,7, [1,2,1,2]]
+    - [512,256,7, [1,2,4,8]]
+    - [256,128,3, [1,2,4,8]]
+    - [128,128,3, [1,2,4,8]]
+  downsamples:
+    - [32, 128,3]
+    - [128,128,3]
+    - [128,256,7]
+  downsample_conv: [ 1, 32, 5]
+  film_layers:
+    - [32,128]
+    - [128,128]
+    - [128,256]
+    - [256,512]
+
+
+
+
+optim:
+  _target_: torch.optim.AdamW
+  lr: 0.0002
+noise_schedule:
+  start: 1e-6
+  stop: 0.01
+  num: 1000
+n_logging_wav_samples: 10

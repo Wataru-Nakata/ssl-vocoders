@@ -149,29 +149,25 @@ class DBlock(nn.Module):
 
 
 class WaveGrad(nn.Module):
-  def __init__(self,n_input_channels,upsample_rates,downsample_rates):
+  def __init__(self,n_input_channels,upsamples,downsamples,downsample_conv,film_layers):
     super().__init__()
-    self.downsample = nn.ModuleList([
-        Conv1d(1, 32, 3, padding=1),
-        DBlock(32, 128, 7),
-        DBlock(128, 128, 7),
-        DBlock(128, 256, 3),
-        DBlock(256, 512, 3),
-    ])
-    self.film = nn.ModuleList([
-        FiLM(32, 128),
-        FiLM(128, 128),
-        FiLM(128, 256),
-        FiLM(256, 512),
-        FiLM(512, 512),
-    ])
-    self.upsample = nn.ModuleList([
-        UBlock(768, 512, 1, [1, 2, 1, 2]),
-        UBlock(512, 512, 3, [1, 2, 4, 8]),
-        UBlock(512, 256, 3, [1, 2, 1, 2]),
-        UBlock(256, 128, 7, [1, 2, 4, 8]),
-        UBlock(128, 128, 7, [1, 2, 4, 8]),
-    ])
+    self.downsample = nn.ModuleList()
+    self.upsample = nn.ModuleList()
+    self.downsample.append(Conv1d(downsample_conv[0], downsample_conv[1], downsample_conv[2], padding=2))
+    for downsample in downsamples:
+      self.downsample.append(
+        DBlock(downsample[0], downsample[1], downsample[2])
+      )
+    for upsample in upsamples:
+      self.upsample.append(
+        UBlock(upsample[0], upsample[1], upsample[2], tuple(upsample[3]))
+      )
+    
+    self.film = nn.ModuleList()
+    for film_layer in film_layers:
+      self.film.append(
+        FiLM(film_layer[0], film_layer[1])
+      )
     self.first_conv = Conv1d(n_input_channels, 768, 3, padding=1)
     self.last_conv = Conv1d(128, 1, 3, padding=1)
 
@@ -183,6 +179,7 @@ class WaveGrad(nn.Module):
       downsampled.append(film(x, noise_scale))
 
     x = self.first_conv(spectrogram)
+    assert len(self.upsample) == len(downsampled)
     for layer, (film_shift, film_scale) in zip(self.upsample, reversed(downsampled)):
       x = layer(x, film_shift, film_scale)
     x = self.last_conv(x)

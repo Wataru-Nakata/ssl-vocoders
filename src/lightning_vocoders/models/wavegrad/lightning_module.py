@@ -20,7 +20,7 @@ class WaveGradLightningModule(LightningModule):
         self.alpha_cum = np.cumprod(self.alpha)
         noise_level = np.cumprod(1-self.beta)**0.5
         noise_level = np.concatenate([[1.0], noise_level], axis=0)
-        self.noise_level = torch.tensor(noise_level, dtype=torch.float32,device=self.device)
+        self.noise_level = torch.tensor(noise_level.astype(np.float32),device=self.device)
 
     def training_step(self, batch, batch_idx) -> STEP_OUTPUT:
         wav,input_feature = batch['resampled_speech.pth'], batch['input_feature']
@@ -36,14 +36,14 @@ class WaveGradLightningModule(LightningModule):
         noisy_wav = noise_scale * wav + (1.0 - noise_scale**2)**0.5 * noise
 
         predicted = self.model(noisy_wav, input_feature.transpose(1,2),noise_scale.squeeze(1))
-        loss = self.criterion(predicted, noise)
+        loss = self.criterion(predicted.squeeze(1), noise)
         self.log('train/loss',loss)
         return loss
     
     def validation_step(self, batch, batch_idx):
         wav,input_feature = batch['resampled_speech.pth'], batch['input_feature']
         batch_size = wav.size(0)
-        wav = wav[:,:int(input_feature.size(1)/50*22050)]
+        wav = wav[:,:int((input_feature.size(1))/50*22050 + 1e-3)]
 
         s = torch.randint(1, self.num_steps + 1, [batch_size], device=self.device)
         l_a, l_b = self.noise_level.to(self.device)[s - 1], self.noise_level.to(self.device)[s]
@@ -53,9 +53,8 @@ class WaveGradLightningModule(LightningModule):
 
         noisy_wav = noise_scale * wav + (1.0 - noise_scale**2)**0.5 * noise
 
-        print(noisy_wav.size(), wav.size())
         predicted = self.model(noisy_wav, input_feature.transpose(1,2),noise_scale.squeeze(1))
-        loss = self.criterion(predicted, noise)
+        loss = self.criterion(predicted.squeeze(1), noise)
         self.log('val/loss',loss)
         if batch_idx < self.cfg.model.n_logging_wav_samples and self.global_rank == 0 and self.local_rank == 0:
             predicted_audio = self.predict(input_feature[0].unsqueeze(0), wav.size(1))
@@ -72,7 +71,7 @@ class WaveGradLightningModule(LightningModule):
             audio = c1 * (audio - c2 * self.model(audio,input_feature.transpose(1,2),noise_scale[n]).squeeze(1))
             if n> 0:
                 noise = torch.randn_like(audio)
-                sigma = ((1.0 - self.alpha_cum[n-1])/ (1.0 - self.alpha[n-1]) * self.beta[n]) ** 0.5
+                sigma = ((1.0 - self.alpha_cum[n-1])/ (1.0 - self.alpha_cum[n]) * self.beta[n]) ** 0.5
                 audio += sigma*noise
             audio = torch.clamp(audio, -1.0, 1.0)
         return audio
