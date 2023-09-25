@@ -36,3 +36,7 @@ Also, colab example in provided for your better understanding. [![Open In Colab]
 
  
 
+# Acknoledgements
+I'd like to express my sincere gratitude to to 
+* jlk876's HiFiGAN [paper](https://arxiv.org/abs/2010.05646) and their [official implementation](https://github.com/jik876/hifi-gan)
+
