@@ -9,6 +9,7 @@ MODEL_URLS = {
     "mel": "https://huggingface.co/Wataru/ssl-vocoder/resolve/main/mel/mel.ckpt",
     "wav2vec2-base": "https://huggingface.co/Wataru/ssl-vocoder/resolve/main/wav2vec2-base/wav2vec2-base.ckpt",
     "wav2vec2-large": "https://huggingface.co/Wataru/ssl-vocoder/resolve/main/wav2vec2-large/wav2vec2-large.ckpt",
+    "wav2vec2-large-l6": "https://huggingface.co/Wataru/ssl-vocoder/resolve/main/wav2vec2-large-l6/wav2vec2-large-l6.ckpt",
     "wav2vec2_l3": "https://huggingface.co/Wataru/ssl-vocoder/resolve/main/wav2vec2_l3/wav2vec2_l3.ckpt",
     "wav2vec2_l6": "https://huggingface.co/Wataru/ssl-vocoder/resolve/main/wav2vec2_l6/wav2vec2_l6.ckpt",
     "wav2vec2_l9": "https://huggingface.co/Wataru/ssl-vocoder/resolve/main/wav2vec2_l9/wav2vec2_l9.ckpt",
