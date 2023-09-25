@@ -32,9 +32,18 @@ Also, colab example in provided for your better understanding. [![Open In Colab]
 | wavlm-large |  ❌  | ☑️   | ❌  | ❌  |  ☑️   |
 
 
+# How to train by yourself
+First, you need to run preprocessing script to extract required features from waveform
+```bash
+python3 src/preprocess.py preprocess=wav2vec2-large 
+```
+This will create webdataset format files in the path specified in config/preprocess/name_of_your_config.yaml
 
+Next you can run training by
+```
+python3 src/train.py data=your_confing_name model=your_config_name train=your_confing_name
+```
 
- 
 
 # Acknoledgements
 I'd like to express my sincere gratitude to to 
