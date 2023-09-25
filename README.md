@@ -18,6 +18,8 @@ import lightning_vocoders
 from lightning_vocoders.models.hifigan.lightning_module import HiFiGANLightningModule
 model = HiFiGANLightningModule.load_from_checkpoint(lightning_vocoders.MODEL_URLS['wavlm-large'],map_location='cpu')
 ```
+
+Also, colab example in provided for your better understanding. [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1-Rj6eBGc-0owr8q1u7KR9ca0V20ws8n4?usp=sharing)
 # Provieded checkpoints
 
 |SSL model name | layer 3 | layer 6| layer 9 | layer 12 | layer 24 |
