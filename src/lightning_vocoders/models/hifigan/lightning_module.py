@@ -159,7 +159,7 @@ class HiFiGANLightningModule(LightningModule,object):
         opt_g.step()
         sch_g.step()
 
-    def validation_step(self, batch, batch_idx) -> STEP_OUTPUT | None:
+    def validation_step(self, batch, batch_idx):
         wav, generator_input, filename, wav_lens = (
             batch["resampled_speech.pth"],
             batch["input_feature"],
