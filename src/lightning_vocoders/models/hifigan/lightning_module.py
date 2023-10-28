@@ -213,18 +213,17 @@ class HiFiGANLightningModule(LightningModule,object):
 
     def log_audio(self, audio, name, sampling_rate):
         for logger in self.loggers:
-            match type(logger):
-                case loggers.WandbLogger:
-                    import wandb
+            if type(logger) == loggers.WandbLogger:
+                import wandb
 
-                    wandb.log(
-                        {name: wandb.Audio(audio, sample_rate=sampling_rate)},
-                        step=self.global_step,
-                    )
-                case loggers.TensorBoardLogger:
-                    logger.experiment.add_audio(
-                        name,
-                        audio,
-                        self.global_step,
-                        sampling_rate,
-                    )
+                wandb.log(
+                    {name: wandb.Audio(audio, sample_rate=sampling_rate)},
+                    step=self.global_step,
+                )
+            elif type(logger) == loggers.TensorBoardLogger:
+                logger.experiment.add_audio(
+                    name,
+                    audio,
+                    self.global_step,
+                    sampling_rate,
+                )
