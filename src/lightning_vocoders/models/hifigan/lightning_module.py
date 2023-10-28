@@ -112,6 +112,8 @@ class HiFiGANLightningModule(LightningModule,object):
             )
 
             loss_disc_all = loss_disc_s + loss_disc_f
+            if torch.isnan(loss_disc_all):
+                return
             self.manual_backward(loss_disc_all)
             opt_d.step()
             sch_d.step()
@@ -149,6 +151,8 @@ class HiFiGANLightningModule(LightningModule,object):
             loss_g += loss_fm_msd * self.cfg.model.loss.fm_msd_coef
             loss_g += loss_g_mpd * self.cfg.model.loss.g_mpd_coef
             loss_g += loss_g_msd * self.cfg.model.loss.g_msd_coef
+            if torch.isnan(loss_g):
+                return
             self.log("train/generator/loss_fm_mpd", loss_fm_mpd)
             self.log("train/generator/loss_fm_msd", loss_fm_msd)
             self.log("train/generator/loss_g_mpd", loss_g_mpd)
@@ -213,18 +217,16 @@ class HiFiGANLightningModule(LightningModule,object):
 
     def log_audio(self, audio, name, sampling_rate):
         for logger in self.loggers:
-            match type(logger):
-                case loggers.WandbLogger:
+            if type(logger) == loggers.WandbLogger:
                     import wandb
-
                     wandb.log(
                         {name: wandb.Audio(audio, sample_rate=sampling_rate)},
                         step=self.global_step,
                     )
-                case loggers.TensorBoardLogger:
-                    logger.experiment.add_audio(
-                        name,
-                        audio,
-                        self.global_step,
-                        sampling_rate,
-                    )
+            elif type(logger) == loggers.TensorBoardLogger:
+                logger.experiment.add_audio(
+                    name,
+                    audio,
+                    self.global_step,
+                    sampling_rate,
+                )

@@ -13,7 +13,10 @@ pyrootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
 @hydra.main(version_base="1.3", config_name="config", config_path="../config")
 def main(cfg: DictConfig):
     seed_everything(1234)
-    lightning_module = hydra.utils.instantiate(cfg.model.lightning_module, cfg)
+    if cfg.train.ckpt_path is not None:
+        lightning_module = hydra.utils.instantiate(cfg.model.lightning_module,cfg).load_from_checkpoint(cfg.train.ckpt_path,cfg=cfg)
+    else:
+        lightning_module = hydra.utils.instantiate(cfg.model.lightning_module, cfg)
     if cfg.compile:
         lightning_module = torch.compile(lightning_module, dynamic=True)
     callbacks = [LearningRateMonitor(logging_interval="step")]
@@ -22,7 +25,7 @@ def main(cfg: DictConfig):
     trainer = hydra.utils.instantiate(
         cfg.train.trainer, logger=loggers, callbacks=callbacks
     )
-    trainer.fit(lightning_module, datamodule,ckpt_path=cfg.train.ckpt_path)
+    trainer.fit(lightning_module, datamodule)
 
 
 if __name__ == "__main__":
