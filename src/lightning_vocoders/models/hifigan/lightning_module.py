@@ -191,13 +191,13 @@ class HiFiGANLightningModule(LightningModule,object):
             )
 
         self.log("val/reconstruction", loss_recons)
-    def on_test_start(self) -> None:
+    def on_test_start(self):
         Path(f"{self.output_path}").mkdir(exist_ok=True,parents=True)
     def test_step(self,batch,batch_idx):
         generator_input  = batch["input_feature"]
         wav_generator_out = self.generator_forward(batch)
         return wav_generator_out
-    def on_test_batch_end(self, outputs: STEP_OUTPUT | None, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> None:
+    def on_test_batch_end(self, outputs: STEP_OUTPUT | None, batch: Any, batch_idx: int, dataloader_idx: int = 0):
         for output,filename,resampled in zip(outputs,batch["filenames"],batch["resampled_speech.pth"]):
             torchaudio.save(filepath=f"{self.output_path}/{filename}.wav",src=output.cpu(),sample_rate=self.cfg.sample_rate)
             torchaudio.save(filepath=f"{self.output_path}/{filename}_gt.wav",src=resampled.unsqueeze(0).cpu(),sample_rate=self.cfg.sample_rate)
