@@ -8,6 +8,5 @@ class HiFiGANXvectorLightningModule(HiFiGANLightningModule,object):
         self.generator = GeneratorWithXvector(cfg.model.generator)
     
     def generator_forward(self, batch):
-        print(batch['xvector'].shape)
         wav_generator_out = self.generator(batch["input_feature"],batch['xvector'])
         return wav_generator_out
