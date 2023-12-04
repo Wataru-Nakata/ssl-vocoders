@@ -1,0 +1,39 @@
+stft:
+  n_fft: 1024
+  win_length: 1024
+  hop_length: 256
+  power: 1
+  center: True
+mel:
+  n_mels: 80
+  sample_rate: ${sample_rate}
+  f_min: 0
+  f_max: 8000
+  n_stft: 513 #${preprocess.stft.n_fft} // 2 + 1
+  norm: "slaney"
+  mel_scale: "slaney"
+
+audio:
+  sample_rate: ${sample_rate}
+defaults:
+  - preprocess_dataset: glob_wav_dataset
+
+
+train_tar_sink:
+  _target_: webdataset.ShardWriter
+  pattern: "/mnt/hdd/preprocessed_data/wavlm_base/wavlm_base-train-%06d.tar.gz"
+val_tar_sink:
+  _target_: webdataset.ShardWriter
+  pattern: "/mnt/hdd/preprocessed_data/wavlm_base/wavlm_base-val-%06d.tar.gz"
+val_size: 3000
+
+
+ssl_models:
+  - 
+    - _target_: transformers.AutoModel.from_pretrained
+      pretrained_model_name_or_path: "microsoft/wavlm-base"
+    - _target_: transformers.AutoFeatureExtractor.from_pretrained
+      pretrained_model_name_or_path: "microsoft/wavlm-base"
+    - sr: 24_000
+      key: wavlm-base.pth
+      layer: 12
