@@ -98,10 +98,11 @@ class VocoderDataModule(lightning.LightningDataModule):
         outputs["wav_lens"] = torch.tensor(
             [b["resampled_speech.pth"].size(0) for b in batch]
         )
-        if self.cfg.data.xvector.use_xvector:
-            outputs["xvector"] = torch.stack(
-                [b["xvector.pth"] for b in batch]
-            )
+        if hasattr(self.cfg.data,'xvector'):
+            if self.cfg.data.xvector.use_xvector:
+                outputs["xvector"] = torch.stack(
+                    [b["xvector.pth"] for b in batch]
+                )
 
         outputs["filenames"] = [b["__key__"] for b in batch]
         return outputs

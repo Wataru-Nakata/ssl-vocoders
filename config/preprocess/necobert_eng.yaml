@@ -21,19 +21,19 @@ defaults:
 
 train_tar_sink:
   _target_: webdataset.ShardWriter
-  pattern: "/mnt/hdd/preprocessed_data/wavlm_base/wavlm_base-train-%06d.tar.gz"
+  pattern: "./necobert_base/necobert_base-train-%06d.tar.gz"
 val_tar_sink:
   _target_: webdataset.ShardWriter
-  pattern: "/mnt/hdd/preprocessed_data/wavlm_base/wavlm_base-val-%06d.tar.gz"
+  pattern: "./necobert_base/necobert_base-val-%06d.tar.gz"
 val_size: 3000
 
 
 ssl_models:
   - 
     - _target_: transformers.AutoModel.from_pretrained
-      pretrained_model_name_or_path: "microsoft/wavlm-base"
-    - _target_: transformers.AutoFeatureExtractor.from_pretrained
-      pretrained_model_name_or_path: "microsoft/wavlm-base"
+      pretrained_model_name_or_path: "/home/wnakata/SSL4SpeechSynthesis/examples/necobert-base-ls"
+      trust_remote_code: True
+    - null
     - sr: 24_000
-      key: wavlm-base.pth
+      key: necobert-base.pth
       layer: 12
