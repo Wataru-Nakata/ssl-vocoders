@@ -21,17 +21,17 @@ defaults:
 
 train_tar_sink:
   _target_: webdataset.ShardWriter
-  pattern: "./necobert_base/necobert_base-train-%06d.tar.gz"
+  pattern: "./necobert_base/necobert_masked-train-%06d.tar.gz"
 val_tar_sink:
   _target_: webdataset.ShardWriter
-  pattern: "./necobert_base/necobert_base-val-%06d.tar.gz"
+  pattern: "./necobert_base/necobert_masked-val-%06d.tar.gz"
 val_size: 3000
 
 
 ssl_models:
   - 
     - _target_: transformers.AutoModel.from_pretrained
-      pretrained_model_name_or_path: "Wataru/necobert-base-ls"
+      pretrained_model_name_or_path: "Wataru/necobert-base-masked"
       trust_remote_code: True
     - null
     - sr: 24_000

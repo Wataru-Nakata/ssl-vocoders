@@ -171,3 +171,4 @@ synthesized/
 *.log
 notebooks/
 .idea/
+*.tar.gz

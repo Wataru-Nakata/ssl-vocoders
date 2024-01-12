@@ -1,0 +1,9 @@
+_target_: lightning_vocoders.preprocessor.dataset.glob_wav_dataset.GlobWavDataset
+roots: 
+  - /mnt/hdd/datasets/libritts/LibriTTS/train-clean-100
+  - /mnt/hdd/datasets/libritts/LibriTTS/train-clean-360
+  - /mnt/hdd/datasets/libritts/LibriTTS/train-other-500
+patterns: 
+  - "**/*.wav"
+  - "**/*.wav"
+  - "**/*.wav"
