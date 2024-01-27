@@ -8,7 +8,7 @@ train_batch_size: 32
 val_batch_size: 8
 
 target_feature: 
-  key: necobert-masked.pth
+  key: necobert-base.pth
   samples_per_sec: 50 # 22050/256
   bias: 0.0025
   layer: 12

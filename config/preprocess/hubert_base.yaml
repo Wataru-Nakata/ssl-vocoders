@@ -21,10 +21,10 @@ defaults:
 
 train_tar_sink:
   _target_: webdataset.ShardWriter
-  pattern: "/mnt/hdd/preprocessed_data/hubert_base/hubert_base-train-%06d.tar.gz"
+  pattern: "./hubert_base/hubert_base-train-%06d.tar.gz"
 val_tar_sink:
   _target_: webdataset.ShardWriter
-  pattern: "/mnt/hdd/preprocessed_data/hubert_base/hubert_base-val-%06d.tar.gz"
+  pattern: "./hubert_base/hubert_base-val-%06d.tar.gz"
 val_size: 3000
 
 

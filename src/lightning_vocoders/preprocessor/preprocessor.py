@@ -20,7 +20,9 @@ class Preprocessor:
             cfg: hydra config
         """
         self.cfg = cfg
-        self.dataset = hydra.utils.instantiate(cfg.preprocess.preprocess_dataset)
+        self.train_dataset = hydra.utils.instantiate(cfg.preprocess.preprocess_dataset.train)
+        print(len(self.train_dataset))
+        self.val_dataset = hydra.utils.instantiate(cfg.preprocess.preprocess_dataset.val)
         self.spec_module = torchaudio.transforms.Spectrogram(**cfg.preprocess.stft)
         self.mel_scale = torchaudio.transforms.MelScale(**cfg.preprocess.mel)
         self.sampling_rate = self.cfg.sample_rate
@@ -50,6 +52,8 @@ class Preprocessor:
         )[
             0
         ]  # remove channel dimension only support mono
+        print(wavform.size())
+        waveform = waveform[:20*self.sampling_rate]
 
         mel_spec, energy = self.calc_spectrogram(waveform)
         with open(audio_file_path, mode="rb") as f:
@@ -96,7 +100,8 @@ class Preprocessor:
         pathlib.Path("/".join(self.cfg.preprocess.train_tar_sink.pattern.split("/")[:-1])).mkdir(exist_ok=True)
         train_sink = hydra.utils.instantiate(self.cfg.preprocess.train_tar_sink)
         val_sink = hydra.utils.instantiate(self.cfg.preprocess.val_tar_sink)
-        dataloader = DataLoader(self.dataset,batch_size=1)
+        dataloader = DataLoader(self.val_dataset,batch_size=1)
+        sink = val_sink
         for idx, (basename, (wav,sr),wav_path) in enumerate(tqdm.tqdm(dataloader)):
             sample = self.process_utterance(
                 basename[0],
@@ -104,10 +109,17 @@ class Preprocessor:
                 sr[0],
                 wav_path[0]
             )
-            if idx >= self.cfg.preprocess.val_size:
-                train_sink.write(sample)
-            else:
-                val_sink.write(sample)
+            sink.write(sample)
+        dataloader = DataLoader(self.train_dataset,batch_size=1)
+        sink = train_sink
+        for idx, (basename, (wav,sr),wav_path) in enumerate(tqdm.tqdm(dataloader)):
+            sample = self.process_utterance(
+                basename[0],
+                wav[0],
+                sr[0],
+                wav_path[0]
+            )
+            sink.write(sample)
 
         train_sink.close()
         val_sink.close()

@@ -1,9 +1,18 @@
-_target_: lightning_vocoders.preprocessor.dataset.glob_wav_dataset.GlobWavDataset
-roots: 
-  - /mnt/hdd/datasets/libritts/LibriTTS/train-clean-100
-  - /mnt/hdd/datasets/libritts/LibriTTS/train-clean-360
-  - /mnt/hdd/datasets/libritts/LibriTTS/train-other-500
-patterns: 
-  - "**/*.wav"
-  - "**/*.wav"
-  - "**/*.wav"
+train:
+    _target_: lightning_vocoders.preprocessor.dataset.glob_wav_dataset.GlobWavDataset
+    roots: 
+      - /work/ge43/e43001/datasets/libritts/LibriTTS/train-clean-100
+      - /work/ge43/e43001/datasets/libritts/LibriTTS/train-clean-360
+      - /work/ge43/e43001/datasets/libritts/LibriTTS/train-other-500
+    patterns: 
+      - "**/*.wav"
+      - "**/*.wav"
+      - "**/*.wav"
+val:
+    _target_: lightning_vocoders.preprocessor.dataset.glob_wav_dataset.GlobWavDataset
+    roots: 
+      - /work/ge43/e43001/datasets/libritts/LibriTTS/dev-clean
+      - /work/ge43/e43001/datasets/libritts/LibriTTS/dev-other
+    patterns: 
+      - "**/*.wav"
+      - "**/*.wav"
